@@ -1,0 +1,55 @@
+name: "Замена / работа"
+description: "Сообщить об изменении в расписании или предстоящей работе"
+title: "[Расписание] "
+labels: ["schedule"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Заполните заявку. Староста или администратор репозитория внесёт её в
+        `data/schedule.json`, и приложение обновится автоматически в 18:00 или 20:30
+        (или по кнопке «Обновить»).
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Что изменилось?
+      options:
+        - Замена пары
+        - Отмена пары
+        - Дополнительная пара
+        - Работа / контрольная / зачёт
+        - Другое
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Дата
+      placeholder: "2026-12-02"
+    validations:
+      required: true
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+  - type: input
+    id: time
+    attributes:
+      label: Время пары
+      placeholder: "14:10-15:50"
+  - type: input
+    id: subject
+    attributes:
+      label: Предмет
+      placeholder: "Теория электрической связи"
+    validations:
+      required: true
+  - type: input
+    id: room
+    attributes:
+      label: Кабинет
+      placeholder: "206"
+  - type: textarea
+    id: note
+    attributes:
+      label: Комментарий
+      placeholder: "Например: замена преподавателя, перенос в другой кабинет, детали работы"
+    validations:
+      required: false
