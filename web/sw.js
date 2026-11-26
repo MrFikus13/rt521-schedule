@@ -1,10 +1,10 @@
 /* RT-521 PWA service worker */
-const VERSION = 'rt521-v2.1.1';
+const VERSION = 'rt521-v2.1.2';
 const SHELL = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
+  './styles.css?v=2.1.2',
+  './app.js?v=2.1.2',
   './manifest.webmanifest',
   './favicon.png',
   './icons/icon-192.png',
@@ -41,7 +41,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(VERSION).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match(request)),
+        .catch(() => caches.match(request).then((hit) => hit || caches.match(request, { ignoreSearch: true }))),
     );
     return;
   }
@@ -68,6 +68,6 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(request)),
+      .catch(() => caches.match(request).then((hit) => hit || caches.match(request, { ignoreSearch: true }))),
   );
 });

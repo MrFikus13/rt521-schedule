@@ -850,7 +850,7 @@
       showToast(style === 'liquid' ? 'iOS Liquid Glass включён' : 'MIUIX включён');
       return;
     }
-    const mode = target.closest('[data-mode]');
+    const mode = target.closest('button[data-mode]');
     if (mode) {
       state.settings.mode = mode.dataset.mode;
       saveSettings();
