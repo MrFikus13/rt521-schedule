@@ -728,7 +728,7 @@
 
   function renderSettings() {
     const s = state.settings;
-    const p = state.parityOverride;
+    const p = state.settings.parityOverride;
     const today = stripTime(new Date());
     const week = semesterWeek(today);
     const parity = parityFor(today);
