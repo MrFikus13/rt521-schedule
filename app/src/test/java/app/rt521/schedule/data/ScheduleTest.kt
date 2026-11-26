@@ -48,6 +48,28 @@ class ScheduleTest {
     }
 
     @Test
+    fun `tsimpu teacher and attendance notes come from github data`() {
+        val tuesday = dayLessons(snapshot, LocalDate.of(2026, 12, 1), WeekParity.EVEN)
+        val cimpu = tuesday.first { it.subject == "Цифровые микропроцессорные устройства" }
+        assertEquals(listOf("Бродунов П.А."), cimpu.teachers)
+        assertEquals(ChangeKind.NOTE, cimpu.change)
+        assertTrue(cimpu.note.contains("только 1 группа"))
+
+        val thursday = dayLessons(snapshot, LocalDate.of(2026, 12, 3), WeekParity.EVEN)
+        val cimpuThursday = thursday.first { it.subject == "Цифровые микропроцессорные устройства" }
+        assertTrue(cimpuThursday.note.contains("все группы"))
+    }
+
+    @Test
+    fun `saturday december twelfth is replaced by kabak rpdu`() {
+        val saturday = dayLessons(snapshot, LocalDate.of(2026, 12, 12), WeekParity.ODD)
+        val replaced = saturday.first { it.time == "12:15-13:55" }
+        assertEquals("Радиопередающие устройства", replaced.subject)
+        assertEquals(ChangeKind.REPLACE, replaced.change)
+        assertEquals(listOf("Кабак Н.И."), replaced.teachers)
+    }
+
+    @Test
     fun `wednesday evening pair was removed`() {
         val lessons = dayLessons(snapshot, LocalDate.of(2026, 11, 25), WeekParity.ODD)
         assertEquals(2, lessons.size)

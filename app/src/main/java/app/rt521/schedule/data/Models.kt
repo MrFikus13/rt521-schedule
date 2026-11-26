@@ -35,7 +35,7 @@ data class AppSettings(
  *  Remote schedule domain
  * ============================================================ */
 
-enum class ChangeKind { REPLACE, EXTRA, CANCEL }
+enum class ChangeKind { REPLACE, EXTRA, CANCEL, NOTE }
 
 data class WorkItem(
     val date: LocalDate,

@@ -145,6 +145,7 @@ private fun changeOrder(kind: ChangeKind): Int = when (kind) {
     ChangeKind.CANCEL -> 0
     ChangeKind.REPLACE -> 1
     ChangeKind.EXTRA -> 2
+    ChangeKind.NOTE -> 3
 }
 
 /**
@@ -215,6 +216,36 @@ fun dayLessons(
                         change = ChangeKind.EXTRA,
                         note = change.note,
                     )
+                }
+
+                ChangeKind.NOTE -> {
+                    val matching = list.indices.filter { index ->
+                        val lesson = list[index]
+                        lesson.time == change.time && (
+                            change.subject.isBlank() ||
+                                normalizedSubject(lesson.subject) == normalizedSubject(change.subject)
+                            )
+                    }
+                    if (matching.isEmpty()) {
+                        list += Lesson(
+                            time = change.time,
+                            subject = change.subject.ifBlank { "Примечание" },
+                            room = change.room,
+                            teachers = change.teachers,
+                            change = ChangeKind.NOTE,
+                            note = change.note,
+                        )
+                    } else {
+                        matching.forEach { index ->
+                            val previous = list[index]
+                            list[index] = previous.copy(
+                                change = previous.change ?: ChangeKind.NOTE,
+                                note = listOf(previous.note, change.note)
+                                    .filter { it.isNotBlank() }
+                                    .joinToString(" · "),
+                            )
+                        }
+                    }
                 }
             }
         }

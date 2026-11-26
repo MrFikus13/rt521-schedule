@@ -11,7 +11,7 @@ from pathlib import Path
 
 TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})$")
 DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-KINDS = {"replace", "replacement", "замена", "extra", "add", "доп", "дополнительная", "cancel", "cancelled", "отмена"}
+KINDS = {"replace", "replacement", "замена", "extra", "add", "доп", "дополнительная", "cancel", "cancelled", "отмена", "note", "info", "примечание", "пометка"}
 ERRORS: list[str] = []
 
 
@@ -84,7 +84,7 @@ def validate_change(item: object, field: str) -> None:
     parse_date(item.get("date"), f"{field}.date")
     kind = item.get("kind")
     if not isinstance(kind, str) or kind.lower() not in KINDS:
-        fail(f"{field}.kind: ожидается replace, extra или cancel")
+        fail(f"{field}.kind: ожидается replace, extra, cancel или note")
     validate_time(item.get("time"), f"{field}.time")
     for key in ("subject", "room", "note"):
         value = item.get(key)

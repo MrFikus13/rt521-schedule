@@ -95,6 +95,7 @@ fun WeekScreen(
     val parity = state.parityFor(weekBase)
     val days = (0L..6L).map { weekBase.plusDays(it) }
     val weekWorks = worksBetween(snapshot.works, weekBase, weekBase.plusDays(6))
+        .filter { !it.date.isBefore(today) }
     val currentMonday = mondayOf(today)
 
     Column(
@@ -442,6 +443,7 @@ private fun CompactLessonRow(
                             ChangeKind.REPLACE -> "замена"
                             ChangeKind.EXTRA -> "доп."
                             ChangeKind.CANCEL -> "отмена"
+                            ChangeKind.NOTE -> "прим."
                         },
                         style = d.type.labelSmall.copy(
                             color = if (kind == ChangeKind.CANCEL) d.colors.error else d.colors.tertiary,

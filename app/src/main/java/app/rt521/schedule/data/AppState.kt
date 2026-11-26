@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import app.rt521.schedule.widget.ScheduleWidgetUpdater
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -71,6 +72,7 @@ class AppState(
     init {
         scope.launch { autoRefreshLoop() }
         ScheduleRefreshScheduler.scheduleNext(appContext)
+        ScheduleWidgetUpdater.updateAll(appContext)
     }
 
     /* ---------- Persistence ---------- */
@@ -167,16 +169,19 @@ class AppState(
             parityOverride = if (current == WeekParity.ODD) 2 else 1,
         )
         persistSettings()
+        ScheduleWidgetUpdater.updateAll(appContext)
     }
 
     fun setParityAuto() {
         settings = settings.copy(parityOverride = 0)
         persistSettings()
+        ScheduleWidgetUpdater.updateAll(appContext)
     }
 
     fun setParityOverride(value: Int) {
         settings = settings.copy(parityOverride = value.coerceIn(0, 2))
         persistSettings()
+        ScheduleWidgetUpdater.updateAll(appContext)
     }
 
     /* ---------- GitHub refresh ---------- */
@@ -238,6 +243,7 @@ class AppState(
                 prefs.edit { putString("cached_schedule_json", raw) }
                 lastError = null
                 if (manual) refreshMessage = "Расписание обновлено"
+                ScheduleWidgetUpdater.updateAll(appContext)
             }.onFailure { error ->
                 val reason = error.message?.takeIf { it.isNotBlank() } ?: "неизвестная ошибка"
                 lastError = reason

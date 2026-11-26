@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Расписание РТ-521</string>
+    <string name="widget_small_name">РТ-521 · Маленький</string>
+    <string name="widget_medium_name">РТ-521 · Средний</string>
+    <string name="widget_large_name">РТ-521 · Большой</string>
+    <string name="widget_small_description">Текущая или следующая пара</string>
+    <string name="widget_medium_description">Пара и следующее занятие</string>
+    <string name="widget_large_description">Расписание на сегодня</string>
 </resources>

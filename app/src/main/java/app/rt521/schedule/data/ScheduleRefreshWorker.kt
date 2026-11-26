@@ -11,6 +11,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.rt521.schedule.BuildConfig
+import app.rt521.schedule.widget.ScheduleWidgetUpdater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -48,6 +49,7 @@ class ScheduleRefreshWorker(
                         json.encodeToString(settings.copy(lastFetchAtMillis = fetchedAt)),
                     )
                 }
+                ScheduleWidgetUpdater.updateAll(applicationContext)
             }
             Result.success()
         } catch (_: Exception) {

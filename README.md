@@ -1,14 +1,21 @@
 # RT-521 · Расписание
 
-Нативное Android-приложение для расписания группы **РТ-521** (5 семестр, 2026/2027).
-Kotlin, Jetpack Compose, официальная библиотека
-[**Compose Miuix**](https://github.com/compose-miuix-ui/miuix) и Material 3 Expressive.
+Расписание группы **РТ-521** (5 семестр, 2026/2027): нативное Android-приложение
+и устанавливаемая веб-версия (PWA).
 
-Приложение не содержит входа, кодов и админки: это не сайт, а читалка расписания.
+* **Android** — Kotlin, Jetpack Compose, официальная библиотека
+  [**Compose Miuix**](https://github.com/compose-miuix-ui/miuix), Material 3 Expressive,
+  три размера домашних виджетов.
+* **Web** — PWA с темами **MIUIX** и **iOS Liquid Glass**, устанавливается на iPhone через
+  «Поделиться → На экран Домой» и на Android из браузера.
+
+Ни в приложении, ни на сайте нет входа, кодов и админки: это читалка расписания.
 Актуальные данные лежат в [`data/schedule.json`](data/schedule.json) этого репозитория.
 
-**APK:** собирается в GitHub Actions и прикладывается к [Releases](https://github.com/OWNER/rt521-schedule/releases)
+**Android APK:** [Releases](https://github.com/MrFikus13/rt521-schedule/releases)
 · Android 8+ · `applicationId app.rt521.schedule`
+
+**PWA:** <https://mrfikus13.github.io/rt521-schedule/>
 
 ## Темы
 
@@ -32,6 +39,54 @@ Kotlin, Jetpack Compose, официальная библиотека
 Все темы: светлая, тёмная, системная. Monet использует `ThemeColorSpec.Spec2025` и
 `ThemePaletteStyle.Expressive`, то есть настоящие Material You-цвета, которые генерирует Miuix.
 
+## Виджеты Android
+
+В приложении три домашних виджета — они добавляются долгим нажатием на рабочем столе →
+**Виджеты → Расписание РТ-521**:
+
+| Виджет | Размер | Что показывает |
+|---|---|---|
+| Маленький | 2×2 | текущая/следующая пара и обратный отсчёт |
+| Средний | 4×2 | две ближайшие пары с временем и кабинетом |
+| Большой | 4×4 | весь день, замены и работы |
+
+Виджеты обновляются вместе с приложением: при запуске, по кнопке **⟳**, в 18:00 и 20:30
+через WorkManager и системный `updatePeriodMillis`.
+
+## Веб-версия (PWA)
+
+Статическая версия живёт в [`web/`](web) и публикуется на GitHub Pages workflow
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml) при изменениях `web/**`
+или `data/schedule.json`.
+
+| MIUIX | iOS Liquid Glass |
+|---|---|
+| <img src="docs/screenshots/web-miuix.png" width="260" /> | <img src="docs/screenshots/web-liquid.png" width="260" /> |
+
+* **MIUIX** — светлая/тёмная, крупная типографика, карточки и нижняя навигация в стиле Miuix.
+* **iOS Liquid Glass** — доступна только в веб-версии: полупрозрачные слои, blur,
+  «стеклянная» нижняя панель, живые градиенты. На Android-приложение не влияет.
+
+PWA умеет работать офлайн (service worker + `localStorage`), обновляет данные в 18:00 и 20:30,
+по кнопке и при возврате на вкладку. Тема и режим переключаются в **Настройки** и сохраняются.
+
+### Установка на iPhone
+
+1. Откройте <https://mrfikus13.github.io/rt521-schedule/> в **Safari**.
+2. Нажмите **Поделиться** → **На экран «Домой»** → **Добавить**.
+3. Запускайте расписание с иконки — оно откроется без адресной строки, в полноэкранном режиме.
+
+На Android PWA устанавливается из Chrome через баннер «Установить приложение» или меню
+⋮ → **Установить приложение**.
+
+### Локальный запуск
+
+```bash
+scripts/build_web.sh          # копирует data/schedule.json в web/data/
+cd web && python3 -m http.server 8080
+# http://localhost:8080/?theme=liquid&mode=dark
+```
+
 ## Обновления расписания из GitHub
 
 `data/schedule.json` — единственный источник правды. Приложение:
@@ -44,9 +99,9 @@ Kotlin, Jetpack Compose, официальная библиотека
 * кэширует последнюю версию и работает офлайн;
 * при ошибке сети показывает сохранённое расписание и предупреждение.
 
-По умолчанию в сборке стоит заглушка
-`https://raw.githubusercontent.com/OWNER/rt521-schedule/main/data/schedule.json`.
-Укажите свой репозиторий одним из способов:
+По умолчанию сборка смотрит в
+`https://raw.githubusercontent.com/MrFikus13/rt521-schedule/main/data/schedule.json`.
+URL можно изменить:
 
 1. В приложении: **Настройки → Обновления → Источник расписания**.
 2. В `gradle.properties` для локальной сборки:
@@ -54,7 +109,7 @@ Kotlin, Jetpack Compose, официальная библиотека
    RT521_SCHEDULE_URL=https://raw.githubusercontent.com/<USER>/rt521-schedule/main/data/schedule.json
    ```
 
-В GitHub Actions URL подставляется автоматически из `github.repository`, поэтому для CI
+В GitHub Actions URL подставляется автоматически из `github.repository`, поэтому для форков
 ничего менять не нужно — собранный там APK уже смотрит в ваш `data/schedule.json`.
 
 GitHub отдаёт файл по HTTPS, поэтому в release ничего дополнительно настраивать не нужно.
@@ -103,13 +158,22 @@ GitHub отдаёт файл по HTTPS, поэтому в release ничего 
     "time": "18:15-19:55",
     "subject": "Консультация",
     "room": "205"
+  },
+  {
+    "date": "2026-12-01",
+    "kind": "note",
+    "time": "12:15-13:55",
+    "note": "Только 1 группа"
   }
 ]
 ```
 
 * `replace` — убрать базовую пару на это время и показать новую;
 * `cancel` — пометить пару отменённой;
-* `extra` — добавить пару поверх расписания.
+* `extra` — добавить пару поверх расписания;
+* `note` — примечание к существующей паре (например, «только 1 группа») без изменения
+  предмета и преподавателя. Если пара на это время не найдена, примечание показывается
+  отдельной карточкой.
 
 ### Работа
 
@@ -164,19 +228,16 @@ keyPassword=...
 Workflow [`.github/workflows/release.yml`](.github/workflows/release.yml) собирает и прикладывает
 подписанный APK к релизу по тегу `v*`.
 
-## Загрузка на GitHub
+## Публикация
 
-Репозиторий уже инициализирован локально. Создайте на GitHub пустой репозиторий
-`rt521-schedule` (без README) и выполните:
+Репозиторий: <https://github.com/MrFikus13/rt521-schedule>.
+Ветка `main` пушится обычным `git push`; workflow **Android CI** собирает debug APK,
+**Validate schedule** проверяет JSON, а **Deploy PWA to GitHub Pages** публикует `web/`.
 
-```bash
-git remote add origin git@github.com:<USER>/rt521-schedule.git
-git branch -M main
-git push -u origin main
-```
+GitHub Pages включён в настройках репозитория (**Settings → Pages → Source: GitHub Actions**).
+Сайт обновляется автоматически после каждого пуша в `main`.
 
-Затем замените `OWNER` в `gradle.properties` на свой ник (или укажите URL в приложении).
-GitHub Actions соберёт debug APK во вкладке **Actions**. Для релиза:
+Для релиза:
 
 ```bash
 git tag v2.0.0
@@ -191,13 +252,16 @@ git push origin v2.0.0
 data/schedule.json          расписание, замены, работы — правится в GitHub
 data/schedule.schema.json   JSON-схема
 scripts/validate_schedule.py проверка перед публикацией
+scripts/build_web.sh        копирует JSON в web/data/
+web/                        PWA: MIUIX + iOS Liquid Glass
 app/src/main/java/app/rt521/schedule/
 ├── data/                   парсер JSON, AppState, кэш и автообновление
+├── widget/                 три домашних виджета и их обновление
 ├── ui/theme/               Material 3 Expressive + MIUIX (Miuix) + Hybrid
 ├── ui/miuix/               экраны на официальных Miuix-компонентах
 ├── ui/screens/             Material/Hybrid экраны
 └── ui/components/          общие компоненты
-.github/workflows/          CI, release, проверка JSON
+.github/workflows/          CI, release, проверка JSON, GitHub Pages
 ```
 
 ## Лицензия

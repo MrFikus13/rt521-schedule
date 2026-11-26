@@ -642,6 +642,7 @@ private fun MiuixLessonCard(
                         ChangeKind.REPLACE -> "Замена"
                         ChangeKind.EXTRA -> "Доп. пара"
                         ChangeKind.CANCEL -> "Отменена"
+                        ChangeKind.NOTE -> "Примечание"
                     },
                     error = kind == ChangeKind.CANCEL,
                 )
@@ -899,6 +900,7 @@ fun MiuixWeekScreen(
     val parity = state.parityFor(weekBase)
     val days = (0L..6L).map { weekBase.plusDays(it) }
     val weekWorks = worksBetween(snapshot.works, weekBase, weekBase.plusDays(6))
+        .filter { !it.date.isBefore(today) }
     val currentMonday = mondayOf(today)
 
     LazyColumn(
@@ -1105,6 +1107,7 @@ private fun MiuixWeekLessonRow(lesson: Lesson, onOpen: () -> Unit) {
                 ChangeKind.REPLACE -> MiuixBadge("Замена")
                 ChangeKind.EXTRA -> MiuixBadge("Доп.")
                 ChangeKind.CANCEL -> MiuixBadge("Отмена", error = true)
+                ChangeKind.NOTE -> MiuixBadge("Прим.")
                 null -> Unit
             }
         },

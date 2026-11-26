@@ -213,8 +213,9 @@ object ScheduleJsonParser {
         "replace", "replacement", "замена" -> ChangeKind.REPLACE
         "extra", "add", "доп", "дополнительная" -> ChangeKind.EXTRA
         "cancel", "cancelled", "отмена" -> ChangeKind.CANCEL
+        "note", "info", "примечание", "пометка" -> ChangeKind.NOTE
         else -> throw IllegalArgumentException(
-            "Неизвестный kind изменения: $value. Допустимо: replace, extra, cancel",
+            "Неизвестный kind изменения: $value. Допустимо: replace, extra, cancel, note",
         )
     }
 

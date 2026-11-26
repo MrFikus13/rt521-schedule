@@ -78,7 +78,7 @@
         "date": { "type": "string", "format": "date" },
         "kind": {
           "type": "string",
-          "enum": ["replace", "extra", "cancel"]
+          "enum": ["replace", "extra", "cancel", "note"]
         },
         "time": { "$ref": "#/$defs/time" },
         "subject": { "type": "string" },

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru" data-style="miuix" data-mode="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f7f7">
+  <meta name="description" content="Расписание группы РТ-521: пары, замены и работы. PWA для Android и iPhone.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="РТ-521">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Расписание РТ-521</title>
+</head>
+<body>
+<svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M7.5 14h2.2M12 14h2.2M16.4 14h.2M7.5 17.2h2.2M12 17.2h2.2"/></symbol>
+  <symbol id="i-week" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M3.5 9.2h17M8.2 9.2v11.3M15.8 9.2v11.3M3.5 14.8h17"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h9M17 17h3"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="15" cy="17" r="2.2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 6v5h-5"/><path d="M18.4 14a7 7 0 1 1-.9-6.2L20 10.3"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.6 0 2.1-1 1.4-2-.9-1.4.1-2.8 1.8-2.8h1.6A4.2 4.2 0 0 0 21 12 9 9 0 0 0 12 3Z"/><circle cx="7.4" cy="10" r="1"/><circle cx="10" cy="6.8" r="1"/><circle cx="14.3" cy="6.8" r="1"/><circle cx="17" cy="10" r="1"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s6.2-5.2 6.2-10.2A6.2 6.2 0 0 0 5.8 10.8C5.8 15.8 12 21 12 21Z"/><circle cx="12" cy="10.5" r="2.2"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.3-3.4 2.9-5.4 6.5-5.4s6.2 2 6.5 5.4"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m14.5 5-7 7 7 7"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9.5 5 7 7-7 7"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m5 9.5 7 7 7-7"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 3.8 21 20H3Z"/><path d="M12 9v4.5M12 16.8h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v11M8 6.5 12 3l4 3.5"/><path d="M5 12v7.5h14V12"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.2A2.2 2.2 0 0 1 6.2 3H20v16.2H6.4A2.4 2.4 0 0 0 4 21.6Z"/><path d="M4 18.5h16"/></symbol>
+</svg>
+
+<div class="aurora" aria-hidden="true">
+  <span class="aurora-blob blob-a"></span>
+  <span class="aurora-blob blob-b"></span>
+  <span class="aurora-blob blob-c"></span>
+  <span class="aurora-grain"></span>
+</div>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="topbar-copy">
+      <div class="eyebrow"><span class="eyebrow-dot"></span><span id="groupLabel">РТ-521 · 5 семестр</span></div>
+      <h1 id="pageTitle">Расписание</h1>
+      <p id="pageSubtitle" class="page-subtitle">Загрузка…</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-button" id="refreshBtn" aria-label="Обновить расписание" title="Обновить">
+        <svg class="icon"><use href="#i-refresh"></use></svg>
+        <span class="spinner" aria-hidden="true"></span>
+      </button>
+      <button class="icon-button" id="themeBtn" aria-label="Оформление" title="Оформление">
+        <svg class="icon"><use href="#i-palette"></use></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="content" class="content" aria-live="polite">
+    <div class="loading-card">
+      <span class="loading-ring"></span>
+      <p>Загружаю расписание…</p>
+    </div>
+  </main>
+
+  <nav class="bottom-nav" id="bottomNav" aria-label="Основная навигация">
+    <button class="nav-item active" data-view="day">
+      <svg class="icon"><use href="#i-calendar"></use></svg>
+      <span>Сегодня</span>
+    </button>
+    <button class="nav-item" data-view="week">
+      <svg class="icon"><use href="#i-week"></use></svg>
+      <span>Неделя</span>
+    </button>
+    <button class="nav-item" data-view="settings">
+      <svg class="icon"><use href="#i-settings"></use></svg>
+      <span>Настройки</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="install-banner" id="installBanner" hidden>
+  <div class="install-banner-icon"><svg class="icon"><use href="#i-share"></use></svg></div>
+  <div class="install-banner-copy">
+    <strong>Установить на iPhone</strong>
+    <span>Поделиться → «На экран Домой»</span>
+  </div>
+  <button class="install-banner-close" id="installClose" aria-label="Скрыть">
+    <svg class="icon"><use href="#i-close"></use></svg>
+  </button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

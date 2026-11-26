@@ -261,6 +261,11 @@ private fun ChangeBadge(kind: ChangeKind) {
             d.colors.errorContainer,
             d.colors.onErrorContainer,
         )
+        ChangeKind.NOTE -> Triple(
+            "Примечание",
+            if (d.isMiuix) d.colors.primary.copy(alpha = 0.12f) else d.colors.secondaryContainer,
+            if (d.isMiuix) d.colors.primary else d.colors.onSecondaryContainer,
+        )
     }
     Text(
         text = text,
