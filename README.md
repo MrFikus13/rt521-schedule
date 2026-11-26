@@ -240,8 +240,8 @@ GitHub Pages включён в настройках репозитория (**Se
 Для релиза:
 
 ```bash
-git tag v2.0.0
-git push origin v2.0.0
+git tag v2.1.0
+git push origin v2.1.0
 ```
 
 Подробнее: [CONTRIBUTING.md](CONTRIBUTING.md).

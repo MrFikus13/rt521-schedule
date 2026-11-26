@@ -20,7 +20,7 @@ android {
         resourceConfigurations += listOf("ru", "en")
 
         val scheduleUrl = providers.gradleProperty("RT521_SCHEDULE_URL")
-            .getOrElse("https://raw.githubusercontent.com/OWNER/rt521-schedule/main/data/schedule.json")
+            .getOrElse("https://raw.githubusercontent.com/MrFikus13/rt521-schedule/main/data/schedule.json")
         buildConfigField("String", "SCHEDULE_URL", "\"$scheduleUrl\"")
     }
 
