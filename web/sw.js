@@ -1,5 +1,5 @@
 /* RT-521 PWA service worker */
-const VERSION = 'rt521-v2.1.0';
+const VERSION = 'rt521-v2.1.1';
 const SHELL = [
   './',
   './index.html',
@@ -60,15 +60,14 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
         if (response.ok) {
           const copy = response.clone();
           caches.open(VERSION).then((cache) => cache.put(request, copy));
         }
         return response;
-      });
-    }),
+      })
+      .catch(() => caches.match(request)),
   );
 });
