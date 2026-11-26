@@ -72,7 +72,7 @@
     selectedDate: stripTime(new Date()),
     weekBase: mondayOf(stripTime(new Date())),
     settings: loadSettings(),
-    lastFetch: Number(localStorage.getItem(`${STORAGE}_last_fetch`) || 0),
+    lastFetch: Number(readStorage(`${STORAGE}_last_fetch`) || 0),
     loading: true,
     refreshing: false,
     error: '',
@@ -169,16 +169,30 @@
     return 'replace';
   }
 
+  function readStorage(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+  function writeStorage(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* private mode or storage full: keep working in memory */
+    }
+  }
   function loadSettings() {
     const defaults = { style: 'miuix', mode: 'auto', parityOverride: 0, installDismissed: false };
     try {
-      return { ...defaults, ...JSON.parse(localStorage.getItem(SETTINGS) || '{}') };
+      return { ...defaults, ...JSON.parse(readStorage(SETTINGS) || '{}') };
     } catch {
       return defaults;
     }
   }
   function saveSettings() {
-    localStorage.setItem(SETTINGS, JSON.stringify(state.settings));
+    writeStorage(SETTINGS, JSON.stringify(state.settings));
   }
 
   /* ============================================================
@@ -935,8 +949,8 @@
       state.schedule = parsed;
       state.error = '';
       state.lastFetch = Date.now();
-      localStorage.setItem(`${STORAGE}_schedule`, text);
-      localStorage.setItem(`${STORAGE}_last_fetch`, String(state.lastFetch));
+      writeStorage(`${STORAGE}_schedule`, text);
+      writeStorage(`${STORAGE}_last_fetch`, String(state.lastFetch));
       render();
       if (manual) showToast('Расписание обновлено');
     } catch (error) {
@@ -950,13 +964,13 @@
   }
 
   function loadCached() {
-    const raw = localStorage.getItem(`${STORAGE}_schedule`);
+    const raw = readStorage(`${STORAGE}_schedule`);
     if (!raw) return false;
     try {
       const parsed = JSON.parse(raw);
       if (!parsed.schedule) return false;
       state.schedule = parsed;
-      state.lastFetch = Number(localStorage.getItem(`${STORAGE}_last_fetch`) || 0);
+      state.lastFetch = Number(readStorage(`${STORAGE}_last_fetch`) || 0);
       return true;
     } catch {
       return false;
