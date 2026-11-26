@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=2.1.3">
+  <link rel="stylesheet" href="styles.css?v=2.2.0">
   <title>Расписание РТ-521</title>
 </head>
 <body>
@@ -21,6 +21,7 @@
   <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M7.5 14h2.2M12 14h2.2M16.4 14h.2M7.5 17.2h2.2M12 17.2h2.2"/></symbol>
   <symbol id="i-week" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M3.5 9.2h17M8.2 9.2v11.3M15.8 9.2v11.3M3.5 14.8h17"/></symbol>
   <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h9M17 17h3"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="15" cy="17" r="2.2"/></symbol>
+  <symbol id="i-works" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="3"/><path d="M9 3.5h6v3H9zM8.5 10h7M8.5 13.5h7M8.5 17h4.5"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 6v5h-5"/><path d="M18.4 14a7 7 0 1 1-.9-6.2L20 10.3"/></symbol>
   <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.6 0 2.1-1 1.4-2-.9-1.4.1-2.8 1.8-2.8h1.6A4.2 4.2 0 0 0 21 12 9 9 0 0 0 12 3Z"/><circle cx="7.4" cy="10" r="1"/><circle cx="10" cy="6.8" r="1"/><circle cx="14.3" cy="6.8" r="1"/><circle cx="17" cy="10" r="1"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
@@ -72,15 +73,19 @@
   <nav class="bottom-nav" id="bottomNav" aria-label="Основная навигация">
     <button class="nav-item active" data-view="day">
       <svg class="icon"><use href="#i-calendar"></use></svg>
-      <span>Сегодня</span>
+      <span>День</span>
     </button>
     <button class="nav-item" data-view="week">
       <svg class="icon"><use href="#i-week"></use></svg>
       <span>Неделя</span>
     </button>
+    <button class="nav-item" data-view="works">
+      <svg class="icon"><use href="#i-works"></use></svg>
+      <span>Работы</span>
+    </button>
     <button class="nav-item" data-view="settings">
       <svg class="icon"><use href="#i-settings"></use></svg>
-      <span>Настройки</span>
+      <span>Ещё</span>
     </button>
   </nav>
 </div>
@@ -98,6 +103,6 @@
   </button>
 </div>
 
-<script src="app.js?v=2.1.3"></script>
+<script src="app.js?v=2.2.0"></script>
 </body>
 </html>

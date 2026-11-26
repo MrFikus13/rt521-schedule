@@ -22,6 +22,7 @@ import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Months
+import top.yukonga.miuix.kmp.icon.extended.Info
 import top.yukonga.miuix.kmp.icon.extended.Refresh
 import top.yukonga.miuix.kmp.icon.extended.Settings
 import top.yukonga.miuix.kmp.icon.extended.Theme
@@ -54,11 +55,13 @@ fun MiuixShell(
     val title = when (selectedTab) {
         RootTab.DAY -> "Расписание"
         RootTab.WEEK -> "Неделя"
+        RootTab.WORKS -> "Работы"
         RootTab.SETTINGS -> "Настройки"
     }
     val subtitle = when (selectedTab) {
         RootTab.DAY -> "${state.schedule.group} · ${state.schedule.semester} семестр"
         RootTab.WEEK -> "Обзор недели · ${state.schedule.academicYear}"
+        RootTab.WORKS -> "Все работы · ${state.schedule.academicYear}"
         RootTab.SETTINGS -> "Тема, цвета и обновления"
     }
 
@@ -101,6 +104,12 @@ fun MiuixShell(
                     label = "Неделя",
                 )
                 MiuixNavItem(
+                    selected = selectedTab == RootTab.WORKS,
+                    onClick = { onSelectTab(RootTab.WORKS) },
+                    icon = MiuixIcons.Info,
+                    label = "Работы",
+                )
+                MiuixNavItem(
                     selected = selectedTab == RootTab.SETTINGS,
                     onClick = { onSelectTab(RootTab.SETTINGS) },
                     icon = MiuixIcons.Settings,
@@ -132,6 +141,18 @@ fun MiuixShell(
                 },
                 onRefresh = { state.refreshAsync(manual = true) },
                 onToast = onToast,
+            )
+
+            RootTab.WORKS -> MiuixWorksScreen(
+                state = state,
+                today = today,
+                innerPadding = innerPadding,
+                scrollBehavior = scrollBehavior,
+                onOpenDay = { date ->
+                    state.selectDate(date)
+                    onSelectTab(RootTab.DAY)
+                },
+                onRefresh = { state.refreshAsync(manual = true) },
             )
 
             RootTab.SETTINGS -> MiuixSettingsScreen(

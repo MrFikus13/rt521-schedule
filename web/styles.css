@@ -1232,3 +1232,114 @@ html[data-style="liquid"] .install-banner {
     transition-duration: .01ms !important;
   }
 }
+
+/* ---------- Works tab / future works ---------- */
+
+.pair-card.has-future-work { cursor: pointer; }
+.pair-card.has-future-work:active { transform: scale(.995); }
+.work-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: var(--warning);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 18%, transparent);
+  vertical-align: middle;
+}
+html[data-style="liquid"] .work-dot {
+  background: var(--warning);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--warning) 65%, transparent);
+}
+.future-works { display: flex; flex-direction: column; gap: 6px; margin-top: 9px; }
+.work-banner.is-future {
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  color: var(--warning);
+}
+html[data-style="liquid"] .work-banner.is-future {
+  background: rgba(255,255,255,.10);
+  color: var(--text);
+}
+
+.works-list { display: flex; flex-direction: column; gap: 8px; }
+.work-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--card-radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: transform .2s var(--spring), opacity .2s;
+}
+.work-entry:active { transform: scale(.99); }
+.work-entry.is-past { opacity: .55; }
+html[data-style="liquid"] .work-entry {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+}
+.work-entry-date {
+  width: 48px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--subject-color) 12%, transparent);
+  color: var(--subject-color);
+  line-height: 1.1;
+}
+.work-entry-date span { font-size: 10px; font-weight: 650; }
+.work-entry-date b { font-size: 19px; font-weight: 800; letter-spacing: -.03em; }
+.work-entry-date small { font-size: 9.5px; font-weight: 600; opacity: .8; }
+html[data-style="liquid"] .work-entry-date {
+  background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.18);
+  color: #fff;
+}
+.work-entry-copy { flex: 1; min-width: 0; }
+.work-entry-subject { display: block; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.work-entry-copy strong { display: block; margin-top: 2px; font-size: 14px; line-height: 1.25; }
+.work-entry-note { display: block; margin-top: 3px; font-size: 11px; color: var(--muted); line-height: 1.3; }
+.work-entry-days {
+  flex: none;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--warning) 13%, transparent);
+  color: var(--warning);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.work-entry.is-past .work-entry-days { background: var(--surface-2); color: var(--muted); }
+html[data-style="liquid"] .work-entry-days {
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.14);
+  color: var(--text);
+}
+
+.next-week-card {
+  border-radius: var(--card-radius);
+  background: var(--surface);
+  padding: 14px;
+}
+html[data-style="liquid"] .next-week-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+.next-week-card h3 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+.next-week-card h3 .icon { width: 17px; height: 17px; color: var(--accent); }
+.next-week-range { margin-top: 2px; color: var(--muted); font-size: 11px; }
+.next-week-empty { margin: 7px 0 1px; color: var(--muted); font-size: 12px; }
+.digest-item { display: flex; gap: 9px; padding: 7px 0; border-top: 1px solid var(--divider); }
+.digest-item:first-of-type { margin-top: 6px; }
+.digest-when { width: 94px; flex: none; color: var(--accent); font-size: 10.5px; font-weight: 650; line-height: 1.3; }
+.digest-copy { flex: 1; min-width: 0; }
+.digest-copy strong { display: block; font-size: 12.5px; line-height: 1.25; }
+.digest-copy small { display: block; margin-top: 1px; color: var(--muted); font-size: 10.5px; line-height: 1.3; }
+.digest-item.is-note .digest-when { color: var(--muted); }

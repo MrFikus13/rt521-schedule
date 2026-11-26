@@ -77,6 +77,7 @@
     refreshing: false,
     error: '',
     expanded: new Set([iso(new Date())]),
+    expandedWorks: new Set(),
     lastStatusKey: '',
     autoTimer: 0,
   };
@@ -368,6 +369,17 @@
       return days >= 0 && days <= 7;
     }).sort((a, b) => a.date.localeCompare(b.date));
   }
+  function futureWorksFor(date, subject, today = stripTime(new Date())) {
+    if (!state.schedule) return [];
+    const ns = normSubject(subject);
+    return (state.schedule.works || []).filter(work => {
+      if (normSubject(work.subject) !== ns) return false;
+      const workDate = parseISO(work.date);
+      if (workDate < today || workDate <= date) return false;
+      const days = Math.round((workDate - stripTime(date)) / 86400000);
+      return days > 7;
+    }).sort((a, b) => a.date.localeCompare(b.date));
+  }
   function worksOn(date) {
     return (state.schedule?.works || []).filter(w => w.date === iso(date));
   }
@@ -376,6 +388,15 @@
       const d = parseISO(w.date);
       return d >= from && d <= to;
     }).sort((a, b) => a.date.localeCompare(b.date));
+  }
+  function noteChangesBetween(from, to) {
+    return (state.schedule?.changes || [])
+      .filter(c => semanticChange(c.kind) === 'note')
+      .filter(c => {
+        const d = parseISO(c.date);
+        return d >= from && d <= to;
+      })
+      .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
   }
 
   function nextLessonAfter(lessons, current) {
@@ -431,6 +452,9 @@
     } else if (state.view === 'week') {
       title.textContent = 'Неделя';
       subtitle.textContent = `Обзор недели · ${schedule?.academic_year || ''}`;
+    } else if (state.view === 'works') {
+      title.textContent = 'Работы';
+      subtitle.textContent = `Все работы · ${schedule?.academic_year || ''}`;
     } else {
       title.textContent = 'Расписание';
       subtitle.textContent = `${dateText(state.selectedDate)} · ${schedule?.academic_year || ''}`;
@@ -445,6 +469,7 @@
     }
     if (state.view === 'week') content.innerHTML = renderWeek();
     else if (state.view === 'settings') content.innerHTML = renderSettings();
+    else if (state.view === 'works') content.innerHTML = renderWorks();
     else content.innerHTML = renderDay();
     requestAnimationFrame(() => {
       content.scrollTop = 0;
@@ -544,6 +569,7 @@
         <span class="count">${pluralPairs(active.length)}</span>
       </div>
       ${list}
+      ${date.getDay() === 0 ? nextWeekDigestHTML(date) : ''}
       <div class="settings-foot">Обновлено ${formatUpdated(state.schedule.updated_at || state.lastFetch)} · ${semesterWeek(today)}-я неделя</div>`;
   }
 
@@ -635,11 +661,14 @@
     if (isCurrent) badges.push('<span class="badge is-current">Сейчас</span>');
 
     const works = entry.cancelled ? [] : worksFor(date, entry.subject, today);
+    const futureWorks = entry.cancelled ? [] : futureWorksFor(date, entry.subject, today);
+    const workKey = `${iso(date)}|${entry.time}|${entry.subject}`;
+    const worksOpen = state.expandedWorks.has(workKey);
     const teachers = entry.teachers?.length
       ? `<div class="pair-teacher">${icon('person')}<span>${esc(entry.teachers.join(', '))}</span></div>` : '';
     const note = entry.note
       ? `<div class="pair-note">${esc(entry.note)}</div>` : '';
-    const workHTML = works.map(w => workBannerHTML(w, today)).join('');
+    const workHTML = works.map(w => workBannerHTML(w, date)).join('');
     const progress = isCurrent && live?.kind === 'lesson'
       ? `<div class="pair-progress"><div class="pair-progress-fill js-progress" style="width:${Math.round(live.progress * 100)}%"></div></div>`
       : '';
@@ -647,12 +676,14 @@
     if (isCurrent) classes.push('is-current');
     if (isDone && !isCancelled) classes.push('is-done');
     if (isCancelled) classes.push('is-cancelled');
-    return `<article class="${classes.join(' ')}" style="--subject-color:${accent}">
+    if (futureWorks.length) classes.push('has-future-work');
+    if (worksOpen) classes.push('is-works-open');
+    return `<article class="${classes.join(' ')}" style="--subject-color:${accent}"${futureWorks.length ? ` data-toggle-works="${esc(workKey)}"` : ''}>
       <div class="pair-head">
         <div class="subject-glyph">${esc(abbr(entry.subject))}</div>
         <div class="pair-main">
           <div class="pair-badges"><span class="pair-index">Пара ${index}</span>${badges.join('')}</div>
-          <h3 class="pair-title${isCancelled ? ' is-cancelled' : ''}">${esc(entry.subject)}</h3>
+          <h3 class="pair-title${isCancelled ? ' is-cancelled' : ''}">${esc(entry.subject)}${futureWorks.length ? '<span class="work-dot" title="Есть будущая работа"></span>' : ''}</h3>
           ${teachers}
         </div>
       </div>
@@ -660,14 +691,16 @@
         <span class="pair-chip">${icon('clock')}${esc(entry.time)}</span>
         <span class="pair-chip">${icon('pin')}каб. ${esc(entry.room || '—')}</span>
       </div>
-      ${note}${workHTML}${progress}
+      ${note}${workHTML}
+      ${futureWorks.length && worksOpen ? `<div class="future-works">${futureWorks.map(w => workBannerHTML(w, date, true)).join('')}</div>` : ''}
+      ${progress}
     </article>`;
   }
 
-  function workBannerHTML(work, today) {
-    const days = Math.round((parseISO(work.date) - today) / 86400000);
-    const when = days === 0 ? 'Сегодня' : days === 1 ? 'Завтра' : `Через ${days} ${pluralDays(days)}`;
-    const cls = days <= 0 ? ' is-today' : '';
+  function workBannerHTML(work, reference, future = false) {
+    const days = Math.round((parseISO(work.date) - stripTime(reference)) / 86400000);
+    const when = days === 0 ? 'В этот день' : days === 1 ? 'На следующий день' : `Через ${days} ${pluralDays(days)}`;
+    const cls = days <= 0 ? ' is-today' : future ? ' is-future' : '';
     return `<div class="work-banner${cls}">${icon('warning', 'icon')} ${esc(when)}: ${esc(work.title || work.type)}
       <span>${esc(work.type)}${work.note ? ' · ' + esc(work.note) : ''}</span></div>`;
   }
@@ -724,6 +757,87 @@
     }).join('');
     return `${weekNavHTML(monday)}${error}${worksHTML}<div class="section-heading"><h2>Дни недели</h2></div>${daysHTML}
       <div class="settings-foot">Обновлено ${formatUpdated(state.schedule.updated_at || state.lastFetch)}</div>`;
+  }
+
+  function renderWorks() {
+    const today = stripTime(new Date());
+    const all = [...(state.schedule?.works || [])]
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const upcoming = all.filter(w => parseISO(w.date) >= today);
+    const past = all.filter(w => parseISO(w.date) < today).reverse();
+    const error = state.error
+      ? `<div class="update-error">${icon('warning')}<span>${esc(state.error)}</span><button data-refresh>Повторить</button></div>`
+      : '';
+    const section = (title, items, isPast = false) => items.length ? `
+      <div class="section-heading"><h2>${title}</h2><span class="count">${items.length}</span></div>
+      <div class="works-list">${items.map(w => workEntryHTML(w, today, isPast)).join('')}</div>` : '';
+    const empty = all.length ? '' : `<div class="empty-state">
+      <div class="empty-icon">📚</div>
+      <h3>Работ пока нет</h3>
+      <p>Как только появятся — они будут здесь</p>
+    </div>`;
+    return `
+      ${error}
+      ${empty}
+      ${section('Ближайшие работы', upcoming)}
+      ${section('Прошедшие работы', past, true)}
+      <div class="settings-foot">Всего ${all.length} ${pluralWorks(all.length)} · работы обновляются вместе с расписанием</div>`;
+  }
+
+  function workEntryHTML(work, today, isPast = false) {
+    const date = parseISO(work.date);
+    const days = Math.round((date - today) / 86400000);
+    const dayLabel = isPast
+      ? `${-days} ${pluralDays(-days)} назад`
+      : days === 0 ? 'сегодня' : days === 1 ? 'завтра' : `через ${days} ${pluralDays(days)}`;
+    return `<article class="work-entry${isPast ? ' is-past' : ''}" data-open-day="${work.date}" style="--subject-color:${subjectColor(work.subject)}">
+      <div class="work-entry-date">
+        <span>${DAY_SHORT[DAY_KEYS[date.getDay()]]}</span>
+        <b>${date.getDate()}</b>
+        <small>${MONTHS_SHORT[date.getMonth()]}</small>
+      </div>
+      <div class="work-entry-copy">
+        <span class="work-entry-subject">${esc(work.subject)} · ${esc(work.type)}</span>
+        <strong>${esc(work.title || work.type)}</strong>
+        ${work.note ? `<span class="work-entry-note">${esc(work.note)}</span>` : ''}
+      </div>
+      <span class="work-entry-days">${esc(dayLabel)}</span>
+    </article>`;
+  }
+
+  function nextWeekDigestHTML(sunday) {
+    const from = addDays(sunday, 1);
+    const to = addDays(sunday, 7);
+    const works = worksBetween(from, to);
+    const notes = noteChangesBetween(from, to);
+    const range = from.getMonth() === to.getMonth()
+      ? `${from.getDate()} – ${to.getDate()} ${MONTHS_GEN[from.getMonth()]}`
+      : `${from.getDate()} ${MONTHS_SHORT[from.getMonth()]} – ${to.getDate()} ${MONTHS_SHORT[to.getMonth()]}`;
+    if (!works.length && !notes.length) {
+      return `<section class="next-week-card">
+        <h3>${icon('calendar')} На следующую неделю</h3>
+        <p class="next-week-empty">Работ и заметок пока нет · ${esc(range)}</p>
+      </section>`;
+    }
+    const workRows = works.map(w => {
+      const d = parseISO(w.date);
+      return `<div class="digest-item">
+        <span class="digest-when">${DAY_SHORT[DAY_KEYS[d.getDay()]]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}</span>
+        <span class="digest-copy"><strong>${esc(w.title || w.type)}</strong><small>${esc(w.subject)} · ${esc(w.type)}${w.note ? ' · ' + esc(w.note) : ''}</small></span>
+      </div>`;
+    }).join('');
+    const noteRows = notes.map(n => {
+      const d = parseISO(n.date);
+      return `<div class="digest-item is-note">
+        <span class="digest-when">${DAY_SHORT[DAY_KEYS[d.getDay()]]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}${n.time ? ' · ' + esc(n.time.split('-')[0]) : ''}</span>
+        <span class="digest-copy"><strong>${esc(n.subject || 'Примечание')}</strong><small>${esc(n.note || '')}</small></span>
+      </div>`;
+    }).join('');
+    return `<section class="next-week-card">
+      <h3>${icon('calendar')} На следующую неделю</h3>
+      <div class="next-week-range">${esc(range)}</div>
+      ${workRows}${noteRows}
+    </section>`;
   }
 
   function renderSettings() {
@@ -795,7 +909,7 @@
         </div>
         <div class="settings-row">
           <span class="row-icon">${icon('book')}</span>
-          <span class="row-copy"><span class="row-title">Версия</span><span class="row-sub">PWA 2.1 · Android APK 2.1</span></span>
+          <span class="row-copy"><span class="row-title">Версия</span><span class="row-sub">PWA 2.2 · Android APK 2.2</span></span>
         </div>
         <div class="settings-row">
           <span class="row-icon">${icon('arrow-right')}</span>
@@ -900,6 +1014,14 @@
       state.view = 'day';
       render();
       window.scrollTo(0, 0);
+      return;
+    }
+    const toggleWorks = target.closest('[data-toggle-works]');
+    if (toggleWorks) {
+      const key = toggleWorks.dataset.toggleWorks;
+      if (state.expandedWorks.has(key)) state.expandedWorks.delete(key);
+      else state.expandedWorks.add(key);
+      render();
       return;
     }
     const refresh = target.closest('[data-refresh]');

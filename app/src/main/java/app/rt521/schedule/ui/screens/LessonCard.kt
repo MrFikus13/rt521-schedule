@@ -4,6 +4,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +30,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -63,9 +67,11 @@ fun LessonCard(
     isDone: Boolean,
     live: LiveStatus?,
     works: List<WorkItem>,
+    futureWorks: List<WorkItem> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val d = LocalDesign.current
+    var worksExpanded by remember(entry.time, entry.subject, date) { mutableStateOf(false) }
     val accent = subjectColor(entry.subject)
     val cancelled = entry.cancelled
     val changed = entry.change != null
@@ -98,6 +104,13 @@ fun LessonCard(
     Column(
         modifier
             .fillMaxWidth()
+            .then(
+                if (futureWorks.isNotEmpty()) {
+                    Modifier.clickable { worksExpanded = !worksExpanded }
+                } else {
+                    Modifier
+                },
+            )
             .alpha(if (isDone && !isCurrent && !cancelled) 0.58f else 1f)
             .shadow(shadow, d.shapes.card, clip = false)
             .clip(d.shapes.card)
@@ -142,15 +155,29 @@ fun LessonCard(
                             ChangeBadge(kind)
                         }
                     }
-                    Text(
-                        text = entry.subject,
-                        style = d.type.cardTitle,
-                        color = content,
-                        textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
-                        modifier = Modifier.padding(top = 5.dp),
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Row(
+                        Modifier.padding(top = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = entry.subject,
+                            style = d.type.cardTitle,
+                            color = content,
+                            textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (futureWorks.isNotEmpty()) {
+                            Spacer(Modifier.width(7.dp))
+                            Box(
+                                Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFFF9500)),
+                            )
+                        }
+                    }
                     if (entry.teachers.isNotEmpty() && !cancelled) {
                         Row(
                             Modifier.padding(top = 5.dp),
@@ -210,9 +237,21 @@ fun LessonCard(
             works.forEach { work ->
                 WorkBanner(
                     work = work,
+                    reference = date,
                     today = today,
                     modifier = Modifier.padding(top = 10.dp),
                 )
+            }
+
+            if (worksExpanded) {
+                futureWorks.forEach { work ->
+                    WorkBanner(
+                        work = work,
+                        reference = date,
+                        today = today,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
             }
 
             if (isCurrent && live is LiveStatus.InLesson && !cancelled) {
@@ -391,13 +430,14 @@ fun BreakRow(
 }
 
 @Composable
-private fun WorkBanner(
+fun WorkBanner(
     work: WorkItem,
+    reference: LocalDate,
     today: LocalDate,
     modifier: Modifier = Modifier,
 ) {
     val d = LocalDesign.current
-    val days = ChronoUnit.DAYS.between(today, work.date).toInt()
+    val days = ChronoUnit.DAYS.between(reference, work.date).toInt()
     val urgent = days <= 0
     val tomorrow = days == 1
     val bg = when {
@@ -420,8 +460,10 @@ private fun WorkBanner(
         else -> d.colors.onSurfaceVariant
     }
     val whenText = when {
-        days == 0 -> "Сегодня"
-        days == 1 -> "Завтра"
+        days == 0 && reference == today -> "Сегодня"
+        days == 0 -> "В этот день"
+        days == 1 && reference == today -> "Завтра"
+        days == 1 -> "На следующий день"
         days > 1 -> "Через $days ${pluralDays(days)}"
         else -> "Просрочено"
     }

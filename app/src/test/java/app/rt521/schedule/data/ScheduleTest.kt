@@ -159,6 +159,38 @@ class ScheduleTest {
     }
 
     @Test
+    fun `works become banners only in the last week`() {
+        val today = LocalDate.of(2026, 11, 26)
+        val work = WorkItem(
+            LocalDate.of(2026, 12, 14),
+            "Программирование",
+            "ОКР",
+            "Обязательная контрольная работа",
+        )
+        val works = listOf(work)
+
+        assertEquals(1, futureWorksFor(works, LocalDate.of(2026, 11, 30), "Программирование", today).size)
+        assertTrue(worksFor(works, LocalDate.of(2026, 11, 30), "Программирование", today).isEmpty())
+
+        assertTrue(futureWorksFor(works, LocalDate.of(2026, 12, 7), "Программирование", today).isEmpty())
+        assertEquals(1, worksFor(works, LocalDate.of(2026, 12, 7), "Программирование", today).size)
+    }
+
+    @Test
+    fun `note changes for next week are selected by date`() {
+        val monday = LocalDate.of(2026, 11, 30)
+        val changes = listOf(
+            ScheduleChange(monday, ChangeKind.NOTE, "16:20-18:00", note = "Только 1 группа"),
+            ScheduleChange(monday.plusDays(2), ChangeKind.NOTE, "09:55-11:35", note = "Все группы"),
+            ScheduleChange(monday.plusDays(2), ChangeKind.REPLACE, "12:15-13:55", subject = "Замена"),
+            ScheduleChange(monday.plusDays(8), ChangeKind.NOTE, "12:15-13:55", note = "Позже"),
+        )
+        val found = noteChangesBetween(changes, monday, monday.plusDays(6))
+        assertEquals(2, found.size)
+        assertEquals("Только 1 группа", found.first().note)
+    }
+
+    @Test
     fun `refresh timer hits 18 and 20 30`() {
         val zone = ZonedDateTime.now().zone
         val morning = ZonedDateTime.of(2026, 11, 26, 9, 0, 0, 0, zone)

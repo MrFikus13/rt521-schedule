@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Assignment
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Tune
@@ -47,6 +48,7 @@ import app.rt521.schedule.ui.theme.LocalDesign
 enum class RootTab(val label: String, val icon: ImageVector) {
     DAY("День", Icons.Rounded.CalendarMonth),
     WEEK("Неделя", Icons.Rounded.DateRange),
+    WORKS("Работы", Icons.Rounded.Assignment),
     SETTINGS("Ещё", Icons.Rounded.Tune),
 }
 

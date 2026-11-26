@@ -34,6 +34,7 @@ import app.rt521.schedule.ui.components.AppToast
 import app.rt521.schedule.ui.screens.DayScreen
 import app.rt521.schedule.ui.screens.SettingsScreen
 import app.rt521.schedule.ui.screens.WeekScreen
+import app.rt521.schedule.ui.screens.WorksScreen
 import app.rt521.schedule.ui.miuix.MiuixShell
 import app.rt521.schedule.ui.theme.LocalDesign
 import kotlinx.coroutines.delay
@@ -151,6 +152,18 @@ private fun MaterialShell(
                         onSelectTab(RootTab.DAY)
                     },
                     onToast = onToast,
+                )
+
+                RootTab.WORKS -> WorksScreen(
+                    state = state,
+                    today = today,
+                    metric = metrics,
+                    onOpenSettings = { onSelectTab(RootTab.SETTINGS) },
+                    onRefresh = { state.refreshAsync(manual = true) },
+                    onOpenDay = { date ->
+                        state.selectDate(date)
+                        onSelectTab(RootTab.DAY)
+                    },
                 )
 
                 RootTab.SETTINGS -> SettingsScreen(

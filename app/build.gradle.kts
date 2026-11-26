@@ -15,8 +15,8 @@ android {
         applicationId = "app.rt521.schedule"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "2.1.0"
+        versionCode = 4
+        versionName = "2.2.0"
         resourceConfigurations += listOf("ru", "en")
 
         val scheduleUrl = providers.gradleProperty("RT521_SCHEDULE_URL")

@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,6 +47,7 @@ import app.rt521.schedule.data.ChangeKind
 import app.rt521.schedule.data.Lesson
 import app.rt521.schedule.data.LessonPhase
 import app.rt521.schedule.data.LiveStatus
+import app.rt521.schedule.data.ScheduleChange
 import app.rt521.schedule.data.WorkItem
 import app.rt521.schedule.data.activeLessons
 import app.rt521.schedule.data.breakAfter
@@ -56,7 +58,10 @@ import app.rt521.schedule.data.dayShort
 import app.rt521.schedule.data.formatCountdown
 import app.rt521.schedule.data.formatDateMedium
 import app.rt521.schedule.data.formatDateTime
+import app.rt521.schedule.data.futureWorksFor
+import app.rt521.schedule.data.noteChangesBetween
 import app.rt521.schedule.data.monthGenitive
+import app.rt521.schedule.data.pluralDays
 import app.rt521.schedule.data.pluralPairs
 import app.rt521.schedule.data.pluralWorks
 import app.rt521.schedule.data.relativeDayLabel
@@ -191,6 +196,8 @@ fun MiuixDayScreen(
                             isCurrent = false,
                             live = null,
                             works = emptyList(),
+                            futureWorks = emptyList(),
+                            date = selected,
                         )
                     }
                 } else {
@@ -204,6 +211,8 @@ fun MiuixDayScreen(
                             isCurrent = isCurrent,
                             live = if (isCurrent) live else null,
                             works = worksFor(snapshot.works, selected, entry.subject, today),
+                            futureWorks = futureWorksFor(snapshot.works, selected, entry.subject, today),
+                            date = selected,
                         )
                     }
                     val nextActive = lessons.drop(index + 1).firstOrNull { !it.cancelled }
@@ -220,6 +229,26 @@ fun MiuixDayScreen(
                         }
                     }
                 }
+            }
+        }
+
+        if (selected.dayOfWeek == DayOfWeek.SUNDAY) {
+            val nextMonday = selected.plusDays(1)
+            val nextSunday = selected.plusDays(7)
+            val nextWorks = worksBetween(snapshot.works, nextMonday, nextSunday)
+            val nextNotes = noteChangesBetween(snapshot.changes, nextMonday, nextSunday)
+            item(key = "nextWeekTitle") {
+                SmallTitle(
+                    text = "На следующую неделю",
+                    insideMargin = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+                )
+            }
+            item(key = "nextWeek") {
+                MiuixNextWeekCard(
+                    works = nextWorks,
+                    notes = nextNotes,
+                    today = today,
+                )
             }
         }
 
@@ -342,7 +371,7 @@ private fun MiuixDateTabs(
                         Modifier
                             .size(4.dp)
                             .clip(CircleShape)
-                            .background(colors.primary),
+                            .background(androidx.compose.ui.graphics.Color(0xFFFF9500)),
                     )
                     else -> Spacer(Modifier.height(4.dp))
                 }
@@ -493,7 +522,7 @@ private fun MiuixStatusCard(
                     Modifier
                         .size(7.dp)
                         .clip(CircleShape)
-                        .background(colors.primary),
+                        .background(androidx.compose.ui.graphics.Color(0xFFFF9500)),
                 )
                 Spacer(Modifier.width(6.dp))
             }
@@ -603,12 +632,15 @@ private fun MiuixStatusCard(
 private fun MiuixLessonCard(
     entry: Lesson,
     index: Int,
+    date: LocalDate,
     today: LocalDate,
     isCurrent: Boolean,
     live: LiveStatus?,
     works: List<WorkItem>,
+    futureWorks: List<WorkItem> = emptyList(),
 ) {
     val colors = MiuixTheme.colorScheme
+    var worksExpanded by remember(date, entry.time, entry.subject) { mutableStateOf(false) }
     val cancelled = entry.cancelled
     val cardColors = when {
         cancelled -> CardDefaults.defaultColors(
@@ -624,7 +656,15 @@ private fun MiuixLessonCard(
     val content = cardColors.contentColor
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (futureWorks.isNotEmpty()) {
+                    Modifier.clickable { worksExpanded = !worksExpanded }
+                } else {
+                    Modifier
+                },
+            ),
         colors = cardColors,
         insideMargin = PaddingValues(16.dp),
         cornerRadius = 16.dp,
@@ -661,14 +701,28 @@ private fun MiuixLessonCard(
                 )
             }
         }
-        Text(
-            entry.subject,
-            style = MiuixTheme.textStyles.title4,
-            fontWeight = FontWeight.Medium,
-            color = content,
-            textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
-            modifier = Modifier.padding(top = 5.dp),
-        )
+        Row(
+            Modifier.padding(top = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                entry.subject,
+                style = MiuixTheme.textStyles.title4,
+                fontWeight = FontWeight.Medium,
+                color = content,
+                textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
+                modifier = Modifier.weight(1f),
+            )
+            if (futureWorks.isNotEmpty()) {
+                Spacer(Modifier.width(7.dp))
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(androidx.compose.ui.graphics.Color(0xFFFF9500)),
+                )
+            }
+        }
         if (entry.teachers.isNotEmpty() && !cancelled) {
             Text(
                 entry.teachers.joinToString(", "),
@@ -718,9 +772,20 @@ private fun MiuixLessonCard(
         works.forEach { work ->
             MiuixWorkCard(
                 work = work,
+                reference = date,
                 today = today,
                 modifier = Modifier.padding(top = 8.dp),
             )
+        }
+        if (worksExpanded) {
+            futureWorks.forEach { work ->
+                MiuixWorkCard(
+                    work = work,
+                    reference = date,
+                    today = today,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
         }
         if (isCurrent && live is LiveStatus.InLesson && !cancelled) {
             LinearProgressIndicator(
@@ -752,16 +817,23 @@ private fun MiuixBadge(text: String, error: Boolean = false) {
 }
 
 @Composable
-private fun MiuixWorkCard(work: WorkItem, today: LocalDate, modifier: Modifier = Modifier) {
+private fun MiuixWorkCard(
+    work: WorkItem,
+    reference: LocalDate,
+    today: LocalDate,
+    modifier: Modifier = Modifier,
+) {
     val colors = MiuixTheme.colorScheme
-    val days = ChronoUnit.DAYS.between(today, work.date).toInt()
+    val days = ChronoUnit.DAYS.between(reference, work.date).toInt()
     val urgent = days <= 1
     val bg = if (urgent) colors.errorContainer else colors.tertiaryContainer
     val fg = if (urgent) colors.onErrorContainer else colors.onTertiaryContainer
     val whenText = when {
-        days == 0 -> "Сегодня"
-        days == 1 -> "Завтра"
-        else -> "Через $days дн."
+        days == 0 && reference == today -> "Сегодня"
+        days == 0 -> "В этот день"
+        days == 1 && reference == today -> "Завтра"
+        days == 1 -> "На следующий день"
+        else -> "Через $days ${pluralDays(days)}"
     }
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -816,7 +888,7 @@ private fun MiuixBreakRow(range: String, big: Boolean, isCurrent: Boolean) {
 }
 
 @Composable
-private fun MiuixEmptyCard(title: String, summary: String) {
+internal fun MiuixEmptyCard(title: String, summary: String) {
     val colors = MiuixTheme.colorScheme
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -838,7 +910,7 @@ private fun MiuixEmptyCard(title: String, summary: String) {
 }
 
 @Composable
-private fun MiuixErrorCard(text: String, onRetry: () -> Unit) {
+internal fun MiuixErrorCard(text: String, onRetry: () -> Unit) {
     val colors = MiuixTheme.colorScheme
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -1113,4 +1185,47 @@ private fun MiuixWeekLessonRow(lesson: Lesson, onOpen: () -> Unit) {
         },
         onClick = onOpen,
     )
+}
+
+
+@Composable
+private fun MiuixNextWeekCard(
+    works: List<WorkItem>,
+    notes: List<ScheduleChange>,
+    today: LocalDate,
+) {
+    val colors = MiuixTheme.colorScheme
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        insideMargin = PaddingValues(0.dp),
+        cornerRadius = 16.dp,
+    ) {
+        if (works.isEmpty() && notes.isEmpty()) {
+            Text(
+                "Работ и заметок пока нет",
+                style = MiuixTheme.textStyles.footnote1,
+                color = colors.onBackgroundVariant,
+                modifier = Modifier.padding(16.dp),
+            )
+        }
+        works.forEachIndexed { index, work ->
+            if (index > 0) HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
+            MiuixWorkRow(work = work, today = today)
+        }
+        notes.forEach { note ->
+            HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
+            BasicComponent(
+                title = "${note.subject.ifBlank { "Примечание" }} · ${formatDateMedium(note.date)}",
+                summary = note.note,
+                startAction = {
+                    Icon(
+                        MiuixIcons.Info,
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+            )
+        }
+    }
 }

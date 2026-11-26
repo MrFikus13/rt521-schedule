@@ -277,8 +277,32 @@ fun worksFor(
     }.sortedBy { it.date }
 }
 
+fun futureWorksFor(
+    works: List<WorkItem>,
+    lessonDate: LocalDate,
+    subject: String,
+    today: LocalDate,
+): List<WorkItem> {
+    val ns = normalizedSubject(subject)
+    return works.filter { work ->
+        normalizedSubject(work.subject) == ns &&
+            work.date >= today &&
+            work.date > lessonDate &&
+            ChronoUnit.DAYS.between(lessonDate, work.date) > 7
+    }.sortedBy { it.date }
+}
+
 fun worksForDate(works: List<WorkItem>, date: LocalDate): List<WorkItem> =
     works.filter { it.date == date }.sortedBy { it.subject }
+
+fun noteChangesBetween(
+    changes: List<ScheduleChange>,
+    from: LocalDate,
+    to: LocalDate,
+): List<ScheduleChange> =
+    changes.filter {
+        it.kind == ChangeKind.NOTE && !it.date.isBefore(from) && !it.date.isAfter(to)
+    }.sortedWith(compareBy({ it.date }, { it.time }))
 
 fun worksBetween(works: List<WorkItem>, from: LocalDate, to: LocalDate): List<WorkItem> =
     works.filter { !it.date.isBefore(from) && !it.date.isAfter(to) }.sortedBy { it.date }

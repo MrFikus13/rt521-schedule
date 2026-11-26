@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Celebration
 import androidx.compose.material.icons.rounded.EventBusy
+import androidx.compose.material.icons.rounded.EventNote
 import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -27,10 +28,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.rt521.schedule.data.AppState
 import app.rt521.schedule.data.LiveStatus
+import app.rt521.schedule.data.ScheduleChange
+import app.rt521.schedule.data.WorkItem
 import app.rt521.schedule.data.activeLessons
 import app.rt521.schedule.data.breakAfter
 import app.rt521.schedule.data.computeLiveStatus
 import app.rt521.schedule.data.dayLessons
+import app.rt521.schedule.data.dayShort
+import app.rt521.schedule.data.formatDateMedium
+import app.rt521.schedule.data.futureWorksFor
+import app.rt521.schedule.data.noteChangesBetween
 import app.rt521.schedule.data.formatDateLong
 import app.rt521.schedule.data.formatDateTime
 import app.rt521.schedule.data.nowMinutes
@@ -38,6 +45,7 @@ import app.rt521.schedule.data.pluralPairs
 import app.rt521.schedule.data.sameLesson
 import app.rt521.schedule.data.semesterWeek
 import app.rt521.schedule.data.worksFor
+import app.rt521.schedule.data.worksBetween
 import app.rt521.schedule.data.worksForDate
 import app.rt521.schedule.ui.BottomMetrics
 import app.rt521.schedule.ui.components.DesignTextButton
@@ -170,6 +178,7 @@ fun DayScreen(
                         isDone = true,
                         live = null,
                         works = emptyList(),
+                        futureWorks = emptyList(),
                     )
                 } else {
                     if (entry.cancelled) return@forEachIndexed
@@ -184,6 +193,7 @@ fun DayScreen(
                         isDone = isDone,
                         live = if (isCurrent) live else null,
                         works = worksFor(snapshot.works, selected, entry.subject, today),
+                        futureWorks = futureWorksFor(snapshot.works, selected, entry.subject, today),
                     )
                 }
 
@@ -202,6 +212,17 @@ fun DayScreen(
                     Spacer(Modifier.height(10.dp))
                 }
             }
+        }
+
+        if (selected.dayOfWeek == DayOfWeek.SUNDAY) {
+            val nextMonday = selected.plusDays(1)
+            val nextSunday = selected.plusDays(7)
+            NextWeekDigest(
+                works = worksBetween(snapshot.works, nextMonday, nextSunday),
+                notes = noteChangesBetween(snapshot.changes, nextMonday, nextSunday),
+                sunday = selected,
+                today = today,
+            )
         }
 
         Spacer(Modifier.height(22.dp))
@@ -248,5 +269,108 @@ fun UpdateErrorBanner(text: String, onRetry: () -> Unit, modifier: Modifier = Mo
             )
         }
         DesignTextButton("Повторить", onRetry, color = d.colors.onErrorContainer)
+    }
+}
+
+
+@Composable
+private fun NextWeekDigest(
+    works: List<WorkItem>,
+    notes: List<ScheduleChange>,
+    sunday: LocalDate,
+    today: LocalDate,
+) {
+    val d = LocalDesign.current
+    val from = sunday.plusDays(1)
+    val to = sunday.plusDays(7)
+    Spacer(Modifier.height(20.dp))
+    SectionLabel("На следующую неделю")
+    Spacer(Modifier.height(6.dp))
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(d.shapes.card)
+            .background(if (d.isMiuix) d.colors.surface else d.colors.surfaceContainerLow)
+            .padding(14.dp),
+    ) {
+        Text(
+            "${formatDateMedium(from)} – ${formatDateMedium(to)}",
+            style = d.type.labelSmall,
+            color = d.colors.onSurfaceVariant,
+        )
+        if (works.isEmpty() && notes.isEmpty()) {
+            Text(
+                "Работ и заметок пока нет",
+                style = d.type.bodySmall,
+                color = d.colors.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+        works.forEach { work ->
+            DigestRow(
+                whenText = "${dayShort(work.date.dayOfWeek)}, ${formatDateMedium(work.date)}",
+                title = work.displayTitle,
+                detail = work.subject + " · " + work.type + if (work.note.isNotBlank()) " · ${work.note}" else "",
+                accent = androidx.compose.ui.graphics.Color(0xFFFF9500),
+            )
+        }
+        notes.forEach { note ->
+            DigestRow(
+                whenText = "${dayShort(note.date.dayOfWeek)}, ${formatDateMedium(note.date)} · ${note.time.substringBefore('-')}",
+                title = note.subject.ifBlank { "Примечание" },
+                detail = note.note,
+                accent = d.colors.primary,
+                note = true,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DigestRow(
+    whenText: String,
+    title: String,
+    detail: String,
+    accent: androidx.compose.ui.graphics.Color,
+    note: Boolean = false,
+) {
+    val d = LocalDesign.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 9.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(Modifier.weight(0.34f)) {
+            Text(
+                whenText,
+                style = d.type.labelSmall.copy(
+                    color = if (note) d.colors.onSurfaceVariant else accent,
+                    fontWeight = FontWeight.SemiBold,
+                ),
+            )
+        }
+        Column(Modifier.weight(0.66f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    if (note) Icons.Rounded.EventNote else Icons.Rounded.WarningAmber,
+                    null,
+                    tint = accent,
+                    modifier = Modifier.size(13.dp),
+                )
+                Spacer(Modifier.size(5.dp))
+                Text(
+                    title,
+                    style = d.type.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                )
+            }
+            if (detail.isNotBlank()) {
+                Text(
+                    detail,
+                    style = d.type.labelSmall.copy(color = d.colors.onSurfaceVariant),
+                    modifier = Modifier.padding(top = 1.dp),
+                )
+            }
+        }
     }
 }

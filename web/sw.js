@@ -1,10 +1,10 @@
 /* RT-521 PWA service worker */
-const VERSION = 'rt521-v2.1.3';
+const VERSION = 'rt521-v2.2.0';
 const SHELL = [
   './',
   './index.html',
-  './styles.css?v=2.1.3',
-  './app.js?v=2.1.3',
+  './styles.css?v=2.2.0',
+  './app.js?v=2.2.0',
   './manifest.webmanifest',
   './favicon.png',
   './icons/icon-192.png',
